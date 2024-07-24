@@ -12,17 +12,19 @@ const page = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        if (!input) return setSearchResults(undefined);
         const res = await fetch(`/api/search?q=${input}`);
+        if (!input) return setSearchResults(undefined);
       } catch (error) {
         console.log(error);
       }
     };
-  }, []);
+    fetchData();
+  }, [input]);
 
   return (
-    <div>
+    <div className="flex flex-col justify-center items-center">
       <Input
+        className="w-[400px] mt-10"
         value={input}
         onChange={(e) => {
           setInput(e.target.value);
