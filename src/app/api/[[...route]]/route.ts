@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { handle } from "hono/vercel";
 import { env } from "hono/adapter";
-import { Redis } from "@upstash/redis";
+import { Redis } from "@upstash/redis/cloudflare";
+import { cors } from "hono/cors";
 
 export const runtime = "edge";
 
@@ -12,12 +13,13 @@ type envConfig = {
   UPSTASH_REDIS_REST_URL: string;
 };
 
+app.use("/*", cors());
 app.get("/search", async (c) => {
-  const { UPSTASH_REDIS_REST_TOKEN, UPSTASH_REDIS_REST_URL } =
-    env<envConfig>(c);
-
-  //----------------------
   try {
+    const { UPSTASH_REDIS_REST_TOKEN, UPSTASH_REDIS_REST_URL } =
+      env<envConfig>(c);
+
+    //----------------------
     const start = performance.now();
 
     const redis = new Redis({
@@ -25,7 +27,7 @@ app.get("/search", async (c) => {
       url: UPSTASH_REDIS_REST_URL,
     });
 
-    const query = c.req.query("q");
+    const query = c.req.query("q")?.toUpperCase();
 
     if (!query) {
       return c.json({ error: "invalid search params" }, { status: 400 });
@@ -40,9 +42,8 @@ app.get("/search", async (c) => {
         if (!el.startsWith(query)) {
           break;
         }
-
         if (el.endsWith("*")) {
-          res.push(el.substring, el.length - 1);
+          res.push(el.substring(0, el.length - 1));
         }
       }
     }
